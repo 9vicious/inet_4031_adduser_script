@@ -10,40 +10,48 @@ import re      # To filter input lines using regular expressions
 import sys     # To read input from standard input (stdin)
 
 def main():
-    # Prompt the user for dry-run mode
+    # --- Prompt for dry-run mode ---
+    # Ask the user if they want to do a dry-run (test mode) instead of actually creating users
     dry_run_input = input("Run in dry-run mode? (Y/N): ").strip().upper()
     dry_run = True if dry_run_input == 'Y' else False
 
+    # Read each line from the input file provided via stdin
     for line_number, line in enumerate(sys.stdin, 1):
         line = line.rstrip()
 
-        # Skip comment lines starting with '#'
+        # --- Skip comment lines ---
         if re.match("^#", line):
+            # Dry-run mode: print a message instead of silently skipping
             if dry_run:
                 print(f"[Dry-run] Line {line_number} skipped (comment line)")
             continue
 
-        # Remove whitespace and split fields by ':'
+        # --- Split line into fields ---
         fields = line.strip().split(':')
 
-        # Skip lines that do not have exactly 5 fields
+        # --- Check for invalid lines ---
         if len(fields) != 5:
+            # Dry-run: print an error message if the line is malformed
             if dry_run:
                 print(f"[Dry-run] Line {line_number} skipped (not enough fields: {len(fields)} fields found)")
             continue
 
-        # Extract user info
+        # --- Extract user info ---
         username = fields[0]
         password = fields[1]
+        # GECOS stores full name info for adduser
         gecos = "%s %s,,," % (fields[3], fields[2])
+        # Groups field: comma-separated, can have '-' for no extra groups
         groups = fields[4].split(',')
 
         # --- Create the user account ---
         print(f"==> Creating account for {username}...")
         cmd_create = f"/usr/sbin/adduser --disabled-password --gecos '{gecos}' {username}"
         if dry_run:
+            # Dry-run: show the command that would run instead of running it
             print(f"[Dry-run] Command: {cmd_create}")
         else:
+            # Normal mode: execute the command
             os.system(cmd_create)
 
         # --- Set the user password ---
